@@ -1,5 +1,22 @@
 {
-  "user1": ["AAPL", "IBM", "MSFT", "GOOGL", "AMZN"],
-  "user2": ["AAPL", "TSLA", "META", "NFLX", "NVDA"],
-  "user3": ["BRK/A", "TSM", "ORCL", "CSCO"]
+  "user1": {
+    "AAPL": 222,
+    "IBM": 272,
+    "MSFT": 59,
+    "GOOGL": 111,
+    "AMZN": 111
+  },
+  "user2": {
+    "AAPL": 137,
+    "TSLA": 137,
+    "NFLX": 137,
+    "NVDA": 137,
+    "META": 137
+  },
+  "user3": {
+    "BRK/A": 5,
+    "TSM": 321,
+    "ORCL": 321,
+    "CSCO": 321
+  }
 }
