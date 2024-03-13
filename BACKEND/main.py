@@ -37,16 +37,15 @@ def get_previous_weekday():
     return (today-delta).strftime("%Y-%m-%d")
 
 def get_stock_quantity(stock_symbol):
-    # Replace this with your actual method to obtain stock quantities
     return random.randint(50, 500)  # Generates a random number between 50 and 500
 
 @app.route("/api/portfolio")
 def retrieve_portfolio():
     total_value_of_portfolio = 0
-    user_id = "user1"  # This should be dynamically set based on your application's logic
+    user_id = "user1"  # This should be dynamically modified based on your application's logic
     portfolio_response = {"username": user_id, "stocks": {}}
     
-    portfolio_stocks = obtain_user_list(user_id=user_id)  # Obtain stock list for the user
+    portfolio_stocks = obtain_user_list(user_id=user_id)  #obtain stock list for the user
 
     for stock_symbol in portfolio_stocks:
         try:
@@ -57,7 +56,7 @@ def retrieve_portfolio():
             num_stocks = portfolio_stocks[stock_symbol]
             closing_price = float(last_closing_price)
 
-            # Update individual stock info
+            #update individual stock info
             portfolio_response["stocks"][stock_symbol] = {
                 "num_stocks": num_stocks,
                 "last_close": closing_price
@@ -67,17 +66,16 @@ def retrieve_portfolio():
             total_value_of_portfolio += num_stocks * closing_price
 
         except Exception as e:
-            # Handling errors in data retrieval
+            #handling errors in data retrieval
             portfolio_response["stocks"][stock_symbol] = {"error": f"Data retrieval failed: {e}"}
 
-    # Add total portfolio value to the response
+    #add total portfolio value to the response
     portfolio_response["total_port_val"] = total_value_of_portfolio
     return jsonify(portfolio_response)
 
 @app.route("/api/portfolio/<stock_symbol>")
 def retrieve_stock_data(stock_symbol):
     try:
-        # Replace 'YOUR_API_KEY' with your actual Alpha Vantage API key
         api_url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={stock_symbol}&apikey={API_KEY}"
         response = requests.get(api_url)
 
@@ -87,11 +85,11 @@ def retrieve_stock_data(stock_symbol):
         data = response.json()
 
         if "Time Series (Daily)" not in data:
-            # Log the full API response for debugging
+            #Llog the full API response for debugging
             return jsonify({"error": "Expected data not found in API response", "api_response": data}), 500
 
-        daily_data = data["Time Series (Daily)"]
-        return jsonify({"symbol": stock_symbol, "values_daily": daily_data})
+        daily_data = data["Time Series (Daily)"] #this is for displaying day by day
+        return jsonify({"symbol": stock_symbol, "values_daily": daily_data}) 
 
     except Exception as e:
         return jsonify({"error": f"Failed to retrieve data: {str(e)}", "exception_details": str(e)}), 500
