@@ -21,13 +21,13 @@ function App() {
   // Function to handle when a stock is selected
   const handleStockSelection = (stockSymbol) => {
     setSelectedStock(stockSymbol);
-    // You can add additional logic here if needed
+    //
   };
 
   // Function to handle interval change
   const handleIntervalChange = (newInterval) => {
     setSelectedInterval(newInterval);
-    // You can add additional logic here if needed
+    //
   };
 
   return (
@@ -60,7 +60,7 @@ function App() {
           <button onClick={() => handleIntervalChange("monthly")}>
             Monthly
           </button>
-          {/* Add more interval buttons as needed */}
+          {/* Add more interval buttons */}
         </div>
       )}
     </div>
