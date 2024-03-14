@@ -85,7 +85,7 @@ def retrieve_stock_data(stock_symbol):
         data = response.json()
 
         if "Time Series (Daily)" not in data:
-            #Llog the full API response for debugging
+            #Log the full API response for debugging
             return jsonify({"error": "Expected data not found in API response", "api_response": data}), 500
 
         daily_data = data["Time Series (Daily)"] #this is for displaying day by day
@@ -95,4 +95,4 @@ def retrieve_stock_data(stock_symbol):
         return jsonify({"error": f"Failed to retrieve data: {str(e)}", "exception_details": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    app.run(debug=True, host="0.0.0.0", port=5001) 
