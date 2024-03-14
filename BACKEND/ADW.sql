@@ -20,22 +20,25 @@ INSERT INTO Users (username, password)
 VALUES ('testUser', 'testPass');    -- the password should be hashed for user's protection
 commit;
 
+SELECT * from Users
+SELECT * from Stocks
+
 -- stocks for user
 
-INSERT INTO Stocks (user_id, stock_id, quantity)
-VALUES ((SELECT user_id FROM Users WHERE username = 'testUser'), 'AAPL', 11);
+INSERT INTO Stocks (user_id, stock_id, symbol, quantity)
+VALUES ((SELECT user_id FROM Users WHERE username = 'testUser'), 1, 'AAPL', 11);
 
-INSERT INTO Stocks (user_id, stock_id, quantity)
-VALUES ((SELECT user_id FROM Users WHERE username = 'testUser'), 'MSFT', 22);
+INSERT INTO Stocks (user_id, stock_id, symbol, quantity)
+VALUES ((SELECT user_id FROM Users WHERE username = 'testUser'), 2, 'MSFT', 22);
 
-INSERT INTO Stocks (user_id, stock_id, quantity)
-VALUES ((SELECT user_id FROM Users WHERE username = 'testUser'), 'NVDA', 33);
+INSERT INTO Stocks (user_id, stock_id, symbol, quantity)
+VALUES ((SELECT user_id FROM Users WHERE username = 'testUser'), 3, 'NVDA', 33);
 
-INSERT INTO Stocks (user_id, stock_id, quantity)
-VALUES ((SELECT user_id FROM Users WHERE username = 'testUser'), 'GOOGL', 44);
+INSERT INTO Stocks (user_id, stock_id,symbol, quantity)
+VALUES ((SELECT user_id FROM Users WHERE username = 'testUser'), 4, 'GOOGL', 44);
 
-INSERT INTO Stocks (user_id, stock_id, quantity)
-VALUES ((SELECT user_id FROM Users WHERE username = 'testUser'), 'AMZN', 55);
+INSERT INTO Stocks (user_id, stock_id, symbol, quantity)
+VALUES ((SELECT user_id FROM Users WHERE username = 'testUser'), 5, 'AMZN', 55);
 commit;
 
 BEGIN -- here will be the interaction from our server:
