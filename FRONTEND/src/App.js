@@ -8,8 +8,8 @@ function App() {
   const [list, setList] = useState(null);
   const [selectedStock, setSelectedStock] = useState(null);
   const [selectedInterval, setSelectedInterval] = useState("daily");
-  const [stockToAdd, setStockToAdd] = useState(""); // State to manage stock input
-  const [quantityToAdd, setQuantityToAdd] = useState(""); // State to manage quantity input
+  const [stockToAdd, setStockToAdd] = useState(""); //manage stock input
+  const [quantityToAdd, setQuantityToAdd] = useState(""); //state to manage quantity input
   const userId = "user1";
   const url = `http://127.0.0.1:5001`;
 
@@ -19,7 +19,7 @@ function App() {
         const response = await fetch(`${url}/api/portfolio`);
         const data = await response.json();
         console.log("Fetched portfolio data:", data);
-        setList(data); // Update the state with the fetched data
+        setList(data); //to update the state with the fetched data
       } catch (error) {
         console.error("Error fetching data:", error);
         setError("Failed to fetch data.");
@@ -32,7 +32,7 @@ function App() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const userId = "1"; // This should be retrieved from a logged-in user session or state
+    const userId = "1"; //to be retrieved from a logged-in user session or state
     try {
       const response = await fetch(`${url}/api/portfolio/update_user`, {
         method: "POST",
@@ -41,20 +41,18 @@ function App() {
         },
         body: JSON.stringify({
           user_id: userId,
-          symbol: stockToAdd.toUpperCase(), // Symbols are usually uppercase
-          quantity: parseInt(quantityToAdd, 10), // Ensure the quantity is an integer
+          symbol: stockToAdd.toUpperCase(), //because symbols are uppercase
+          quantity: parseInt(quantityToAdd, 10), //quantity has to be an integer
         }),
       });
       const data = await response.json();
       if (response.ok) {
         console.log("Stock updated:", data);
-        // Optionally reset the form fields and fetch the updated list
+        //optionally resetting the form fields and fetch the updated list
         setStockToAdd("");
         setQuantityToAdd("");
-        // Trigger a refresh of your portfolio state to reflect the updated data
-        // You might need a new useEffect or a function that re-fetches the portfolio data
       } else {
-        // Handle any errors from the server side
+        //Handle any errors from the server side
         setError(data.error || "An error occurred while updating the stock.");
       }
     } catch (error) {
