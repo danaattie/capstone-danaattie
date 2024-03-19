@@ -174,5 +174,22 @@ def update_user():
         return jsonify({"error": f"Failed to update stocks: {str(e)}"}), 500
 
 
+@app.route('/api/historical_prices/<stock_symbol>', methods=['GET'])
+def get_historical_prices(stock_symbol):
+    try:
+        url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol={stock_symbol}&outputsize=compact&apikey={API_KEY}"
+        response = requests.get(url)
+        data = response.json()
+
+        #extract just the last 30 days of data
+        time_series = data.get('Time Series (Daily)', {})
+        last_30_days = list(time_series.items())[:30]
+        prices = [{date: info['4. close']} for date, info in last_30_days]
+
+        return jsonify(prices), 200
+    except Exception as e:
+        return jsonify({"error": f"Failed to fetch historical prices: {str(e)}"}), 500
+
+
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5001, use_reloader=False) 
