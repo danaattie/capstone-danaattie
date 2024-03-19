@@ -22,7 +22,8 @@ pool = oracledb.create_pool(user=un, password=pw,dsn=dsn)
 engine = create_engine("oracle+oracledb://", creator=pool.acquire, poolclass=NullPool, future=True, echo=True)
 
 app = Flask(__name__)
-cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
+# cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
+CORS(app)
 
 def obtain_user_list(user_id):
     # This function now performs a SQL query to obtain the user's stock list
@@ -116,55 +117,290 @@ def retrieve_stock_data(stock_symbol):
     except Exception as e:
         return jsonify({"error": f"Failed to retrieve data: {str(e)}", "exception_details": str(e)}), 500
 
-if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5001) 
+# if __name__ == "__main__":
+#     app.run(debug=True, host="0.0.0.0", port=5001) 
+
+    
+# @app.route("/api/portfolio/update_user", methods=['POST'])
+# def update_user():
+#     try:
+#         data = request.json
+#         user_id = 1
+#         symbol = data.get("symbol")
+#         quantity = data.get("quantity")
+
+#         # database connection from the pool
+#         with engine.connect() as connection:
+#             with connection.cursor() as cursor:
+#                 if quantity == 0:
+#                     # delete symbol from the database
+#                     cursor.execute("DELETE FROM Stocks WHERE user_id = :user_id AND symbol = :symbol", [user_id, symbol])
+#                 else:
+#                     # check if the symbol exists for the user
+#                     cursor.execute("SELECT COUNT(*) FROM Stocks WHERE user_id = :user_id AND symbol = :symbol", [user_id, symbol])
+#                     count = cursor.fetchone()[0]
+                    
+#                     if count > 0:
+#                         # update the symbol quantity
+#                         cursor.execute("UPDATE Stocks SET quantity = :quantity WHERE user_id = :user_id AND symbol = :symbol", [quantity, user_id, symbol])
+#                     else:
+#                         # insert new symbol with quantity
+#                         cursor.execute("INSERT INTO Stocks (user_id, symbol, quantity) VALUES (:user_id, :symbol, :quantity)", [user_id, symbol, quantity])
+
+#                 connection.commit()
+
+#         return jsonify({"message": "Stocks updated successfully", "user_id": user_id, "symbol": symbol, "quantity": quantity}), 200
+
+#     except oracledb.DatabaseError as e:
+#         error, = e.args
+#         return jsonify({"error": f"Database error: {error.message}"}), 500
+#     except Exception as e:
+#         return jsonify({"error": f"Failed to update stocks: {str(e)}"}), 500
+
+
+# @app.route("/api/portfolio/update_user", methods=['GET', 'POST'])
+# def update_user():
+#     return jsonify({"message": "Endpoint hit successfully"}), 200
+
+
+# @app.route("/api/portfolio/update_user", methods=['POST'])
+# def update_user():
+#     try:
+#         data = request.json
+#         user_id = 1  # Assuming you'll manage user IDs differently in a real app
+#         symbol = data.get("symbol")
+#         quantity = data.get("quantity")
+
+#         with engine.begin() as connection:  # automatically commits or rolls back
+#             # if quantity == 0:
+#             #     # Delete symbol from the database
+#             #     connection.execute(
+#             #         text("DELETE FROM Stocks WHERE user_id = :user_id AND symbol = :symbol"),
+#             #         {"user_id": user_id, "symbol": symbol}
+#             #     )
+#             # else:
+#             #     # Check if the symbol exists for the user
+#             #     result = connection.execute(
+#             #         text("SELECT COUNT(*) FROM Stocks WHERE user_id = :user_id AND symbol = :symbol"),
+#             #         {"user_id": user_id, "symbol": symbol}
+#             #     )
+#             #     count = result.scalar()
+
+#             #     if count > 0:
+#             #         # Update the symbol quantity
+#             #         connection.execute(
+#             #             text("UPDATE Stocks SET quantity = :quantity WHERE user_id = :user_id AND symbol = :symbol"),
+#             #             {"quantity": quantity, "user_id": user_id, "symbol": symbol}
+#             #         )
+#             #     else:
+#             #         # Insert new symbol with quantity
+#             #         connection.execute(
+#             #             text("INSERT INTO Stocks (user_id, symbol, quantity) VALUES (:user_id, :symbol, :quantity)"),
+#             #             {"user_id": user_id, "symbol": symbol, "quantity": quantity}
+#             #         )
+            
+#             # TEST
+#             connection.execute(
+#                     text("INSERT INTO STOCKS (user_id, symbol, quantity) VALUES (:user_id, :symbol, :quantity)"),
+#                     {"user_id": user_id, "symbol": symbol, "quantity": quantity}
+#                 )
+
+
+#         return jsonify({"message": "Stocks updated successfully", "user_id": user_id, "symbol": symbol, "quantity": quantity}), 200
+
+#     except Exception as e:
+#         return jsonify({"error": f"Failed to update stocks: {str(e)}"}), 500
+
+# @app.route("/api/portfolio/update_user", methods=['POST'])
+# def update_user():
+#     try:
+#         data = request.json
+#         print("Received data:", data)  # Add this print statement to log the incoming payload
+#         user_id = data.get("user_id", 1)  # It's better to use a dynamic user_id
+#         symbol = data.get("symbol")
+#         quantity = data.get("quantity")
+
+#         if not symbol or quantity is None:
+#             raise ValueError("The 'symbol' and 'quantity' must be provided.")
+
+#         # check if symbol exists in STOCKS table
+#         # stock =
+
+#         #if stock exists
+#         #    if quantity is 0, if it is then remove the row
+#         #    else update the quantity to the new quantity
+#         #else 
+#         # if quantity is greater than 0 insert row with stock and quantity 
+
+#         with engine.begin() as connection:
+            
+            
+#             connection.execute(
+#                 text("INSERT INTO STOCKS (user_id, symbol, quantity) VALUES (:user_id, :symbol, :quantity)"),
+#                 {"user_id": user_id, "symbol": symbol, "quantity": quantity}
+#             )
+
+#         return jsonify({"message": "Stocks updated successfully", "user_id": user_id, "symbol": symbol, "quantity": quantity}), 200
+
+#     except Exception as e:
+#         print("Error:", e)  # Log the error
+#         return jsonify({"error": f"Failed to update stocks: {str(e)}"}), 500
+
+# @app.route("/api/portfolio/update_user", methods=['POST'])
+# def update_user():
+#     try:
+#         data = request.json
+#         print("Received data:", data)  # Log the incoming payload
+#         user_id = data.get("user_id", 1)  # Use a dynamic user_id in production
+#         symbol = data.get("symbol")
+#         quantity = data.get("quantity")
+
+#         if not symbol or quantity is None:
+#             raise ValueError("The 'symbol' and 'quantity' must be provided.")
+
+#         with engine.begin() as connection:
+#             # Check if the symbol exists for the user
+#             result = connection.execute(
+#                 text("SELECT COUNT(*) FROM STOCKS WHERE user_id = :user_id AND symbol = :symbol"),
+#                 {"user_id": user_id, "symbol": symbol}
+#             )
+#             count = result.scalar()
+
+#             if count > 0:
+#                 # The stock exists for the user, now check the quantity
+#                 if quantity == 0:
+#                     # Quantity is zero, remove the stock
+#                     connection.execute(
+#                         text("DELETE FROM STOCKS WHERE user_id = :user_id AND symbol = :symbol"),
+#                         {"user_id": user_id, "symbol": symbol}
+#                     )
+#                 else:
+#                     # Update the stock quantity
+#                     connection.execute(
+#                         text("UPDATE STOCKS SET quantity = :quantity WHERE user_id = :user_id AND symbol = :symbol"),
+#                         {"quantity": quantity, "user_id": user_id, "symbol": symbol}
+#                     )
+#             else:
+#                 # The stock does not exist for the user, insert it if quantity is greater than 0
+#                 if quantity > 0:
+#                     connection.execute(
+#                         text("INSERT INTO STOCKS (user_id, symbol, quantity) VALUES (:user_id, :symbol, :quantity)"),
+#                         {"user_id": user_id, "symbol": symbol, "quantity": quantity}
+#                     )
+#             message = "Stocks updated successfully"
+#             return jsonify({"message": message, "user_id": user_id, "symbol": symbol, "quantity": quantity}), 200
+
+#     except Exception as e:
+#         print("Error:", e)  # Log the error for debugging
+#         return jsonify({"error": f"Failed to update stocks: {str(e)}"}), 500
+
+# @app.route("/api/portfolio/update_user", methods=['POST'])
+# def update_user():
+#     try:
+#         data = request.json
+#         print("Received data:", data)  # Log the incoming payload for debugging
+
+#         user_id = data.get("user_id", 1)  # In production, this should come from session or token
+#         symbol = data.get("symbol")
+#         quantity = data.get("quantity")
+
+#         if not symbol or quantity is None:
+#             raise ValueError("The 'symbol' and 'quantity' must be provided.")
+
+#         with engine.begin() as connection:
+#             # Check if the symbol exists for the user
+#             result = connection.execute(
+#                 text("SELECT COUNT(*) FROM STOCKS WHERE user_id = :user_id AND symbol = :symbol"),
+#                 {"user_id": user_id, "symbol": symbol}
+#             )
+#             count = result.scalar()
+#             print(f"Stock count for {symbol}: {count}")  # Log the count for debugging
+
+#             if count > 0:
+#                 if quantity == 0:
+#                     # Delete the stock
+#                     delete_result = connection.execute(
+#                         text("DELETE FROM STOCKS WHERE user_id = :user_id AND symbol = :symbol"),
+#                         {"user_id": user_id, "symbol": symbol}
+#                     )
+#                     print(f"Deleted {delete_result.rowcount} rows")  # Log how many rows were deleted
+#                 else:
+#                     # Update the stock quantity
+#                     update_result = connection.execute(
+#                         text("UPDATE STOCKS SET quantity = :quantity WHERE user_id = :user_id AND symbol = :symbol"),
+#                         {"quantity": quantity, "user_id": user_id, "symbol": symbol}
+#                     )
+#                     print(f"Updated {update_result.rowcount} rows")  # Log how many rows were updated
+#             else:
+#                 if quantity > 0:
+#                     # Insert the new stock with quantity
+#                     insert_result = connection.execute(
+#                         text("INSERT INTO STOCKS (user_id, symbol, quantity) VALUES (:user_id, :symbol, :quantity)"),
+#                         {"user_id": user_id, "symbol": symbol, "quantity": quantity}
+#                     )
+#                     print(f"Inserted {insert_result.rowcount} rows")  # Log how many rows were inserted
+
+#         return jsonify({"message": "Stocks updated successfully", "user_id": user_id, "symbol": symbol, "quantity": quantity}), 200
+
+#     except Exception as e:
+#         print("Error:", e)  # Log the error for debugging
+#         return jsonify({"error": f"Failed to update stocks: {str(e)}"}), 500
 
 @app.route("/api/portfolio/update_user", methods=['POST'])
 def update_user():
     try:
         data = request.json
-        user_id = data.get("user_id")
+        print("Received data:", data)  # Log the incoming payload for debugging
+        user_id = data.get("user_id", 1)  # In production, use session or token for user_id
         symbol = data.get("symbol")
         quantity = data.get("quantity")
 
-        #database connection from the pool
-        with engine.connect() as connection:
-            with connection.cursor() as cursor:
-                if quantity == 0:
-                    #delete symbol from the database
-                    cursor.execute("DELETE FROM Stocks WHERE user_id = :user_id AND symbol = :symbol", [user_id, symbol])
+        if symbol is None or quantity is None:
+            raise ValueError("Both 'symbol' and 'quantity' must be provided.")
+
+        with engine.begin() as connection:
+            # If quantity is zero, delete the stock; otherwise, update or insert.
+            if quantity == 0:
+                delete_result = connection.execute(
+                    text("DELETE FROM STOCKS WHERE user_id = :user_id AND symbol = :symbol"),
+                    {"user_id": user_id, "symbol": symbol}
+                )
+                print(f"Deleted {delete_result.rowcount} rows for user {user_id} and symbol {symbol}")  # Log deletion
+            else:
+                # Check if the stock exists
+                result = connection.execute(
+                    text("SELECT quantity FROM STOCKS WHERE user_id = :user_id AND symbol = :symbol FOR UPDATE"),
+                    {"user_id": user_id, "symbol": symbol}
+                )
+                stock = result.fetchone()
+                if stock:
+                    # Update the existing stock quantity
+                    update_result = connection.execute(
+                        text("UPDATE STOCKS SET quantity = :quantity WHERE user_id = :user_id AND symbol = :symbol"),
+                        {"user_id": user_id, "symbol": symbol, "quantity": quantity}
+                    )
+                    print(f"Updated quantity to {quantity} for user {user_id} and symbol {symbol}")  # Log update
                 else:
-                    #check if the symbol exists for the user
-                    cursor.execute("SELECT COUNT(*) FROM Stocks WHERE user_id = :user_id AND symbol = :symbol", [user_id, symbol])
-                    count = cursor.fetchone()[0]
-                    
-                    if count > 0:
-                        #update the symbol quantity
-                        cursor.execute("UPDATE Stocks SET quantity = :quantity WHERE user_id = :user_id AND symbol = :symbol", [quantity, user_id, symbol])
-                    else:
-                        #insert new symbol with quantity
-                        cursor.execute("INSERT INTO Stocks (user_id, symbol, quantity) VALUES (:user_id, :symbol, :quantity)", [user_id, symbol, quantity])
+                    # Insert a new stock record
+                    insert_result = connection.execute(
+                        text("INSERT INTO STOCKS (user_id, symbol, quantity) VALUES (:user_id, :symbol, :quantity)"),
+                        {"user_id": user_id, "symbol": symbol, "quantity": quantity}
+                    )
+                    print(f"Inserted new stock for user {user_id} with symbol {symbol} and quantity {quantity}")  # Log insert
 
-                connection.commit()
+        # Fetch the current portfolio to ensure front end gets the updated data
+        updated_stocks = connection.execute(
+            text("SELECT * FROM STOCKS WHERE user_id = :user_id"),
+            {"user_id": user_id}
+        ).fetchall()
+        print(f"Current stocks after update: {updated_stocks}")  # Log the current state of the portfolio
 
-                import requests
+        return jsonify({"message": "Stocks updated successfully", "updated_stocks": updated_stocks}), 200
 
-        url = 'http://localhost:5001/update_user'
-        headers = {'Content-Type': 'application/json'}
-        data = {
-            'user_id': 1,
-            'new_username': 'newuser',
-            'new_password': 'newpass'
-        }
-        response = requests.post(url, headers=headers, json=data)
-        print(response.json())
-        return jsonify({"message": "Stocks updated successfully", "user_id": user_id, "symbol": symbol, "quantity": quantity}), 200
-
-    except oracledb.DatabaseError as e:
-        error, = e.args
-        return jsonify({"error": f"Database error: {error.message}"}), 500
     except Exception as e:
+        print("Error:", e)  # Log the error for debugging
         return jsonify({"error": f"Failed to update stocks: {str(e)}"}), 500
+
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5001, use_reloader=False) 

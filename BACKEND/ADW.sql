@@ -98,3 +98,15 @@ BEGIN
   commit;
 END;
 /
+
+CREATE SEQUENCE MYBACKEND.UserIDSeq
+START WITH 2  -- Assuming '1' is the highest existing USER_ID
+INCREMENT BY 1
+NOCACHE;
+
+CREATE SEQUENCE MYBACKEND.StockIDSeq
+START WITH 6  -- Assuming '5' is the highest existing STOCK_ID
+INCREMENT BY 1
+NOCACHE;
+
+
