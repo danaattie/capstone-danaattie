@@ -8,43 +8,60 @@ function App() {
   const [list, setList] = useState(null);
   const [selectedStock, setSelectedStock] = useState(null);
   const [selectedInterval, setSelectedInterval] = useState("daily");
-  const handleStockSelection = (symbol) => setSelectedStock(symbol);
+  const [stockToAdd, setStockToAdd] = useState(""); // State to manage stock input
+  const [quantityToAdd, setQuantityToAdd] = useState(""); // State to manage quantity input
   const userId = "user1";
-  // const url = `https://mcsbt-integration-416418.ew.r.appspot.com`;
   const url = `http://127.0.0.1:5001`;
 
   useEffect(() => {
     async function fetchData() {
-      await fetch(`${url}/api/portfolio`)
-        .then((response) => response.json())
-        .then((data) => {
-          console.log("Fetched portfolio data:", data);
-          setList(data); // Update the state with the fetched data
-        })
-        .catch((error) => {
-          console.error("Error fetching data:", error);
-          // If there's an error, i set some error state and display it
-        });
+      try {
+        const response = await fetch(`${url}/api/portfolio`);
+        const data = await response.json();
+        console.log("Fetched portfolio data:", data);
+        setList(data); // Update the state with the fetched data
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        setError("Failed to fetch data.");
+      }
     }
     fetchData();
-    fetch("http://localhost:5001/api/portfolio/update_user", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        user_id: 1,
-        new_username: "newuser",
-        new_password: "newpass",
-      }),
-    })
-      .then((response) => response.json())
-      .then((data) => console.log(data))
-      .catch((error) => console.error("Error:", error));
   }, []);
 
-  console.log(`got data ${list}`);
-  const [stockDetails, setStockDetails] = useState(null);
+  const handleStockSelection = (symbol) => setSelectedStock(symbol);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const userId = "1"; // This should be retrieved from a logged-in user session or state
+    try {
+      const response = await fetch(`${url}/api/portfolio/update_user`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          symbol: stockToAdd.toUpperCase(), // Symbols are usually uppercase
+          quantity: parseInt(quantityToAdd, 10), // Ensure the quantity is an integer
+        }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        console.log("Stock updated:", data);
+        // Optionally reset the form fields and fetch the updated list
+        setStockToAdd("");
+        setQuantityToAdd("");
+        // Trigger a refresh of your portfolio state to reflect the updated data
+        // You might need a new useEffect or a function that re-fetches the portfolio data
+      } else {
+        // Handle any errors from the server side
+        setError(data.error || "An error occurred while updating the stock.");
+      }
+    } catch (error) {
+      console.error("Error updating stock:", error);
+      setError("Failed to update stock. Please try again.");
+    }
+  };
 
   return (
     <div className="App">
@@ -53,6 +70,21 @@ function App() {
       </header>
       <main>
         {error && <div className="Error-message">{error}</div>}
+        <form onSubmit={handleSubmit}>
+          <input
+            type="text"
+            placeholder="Stock Symbol"
+            value={stockToAdd}
+            onChange={(e) => setStockToAdd(e.target.value)}
+          />
+          <input
+            type="number"
+            placeholder="Quantity"
+            value={quantityToAdd}
+            onChange={(e) => setQuantityToAdd(e.target.value)}
+          />
+          <button type="submit">Add Stock</button>
+        </form>
         {list ? (
           <div>
             <h2 className="Portfolio-value">
