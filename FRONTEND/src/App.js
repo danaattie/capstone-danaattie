@@ -7,7 +7,7 @@ function App() {
   const [error, setError] = useState("");
   const [list, setList] = useState(null);
   const [selectedStock, setSelectedStock] = useState(null);
-  const [selectedInterval, setSelectedInterval] = useState("daily");
+  const [historicalPrices, setHistoricalPrices] = useState([]);
   const [stockToAdd, setStockToAdd] = useState(""); //manage stock input
   const [quantityToAdd, setQuantityToAdd] = useState(""); //state to manage quantity input
   const userId = "user1";
@@ -28,11 +28,68 @@ function App() {
     fetchData();
   }, []);
 
-  const handleStockSelection = (symbol) => setSelectedStock(symbol);
+  const handleStockSelection = async (symbol) => {
+    setSelectedStock(symbol);
+    setError("");
+    try {
+      const response = await fetch(`${url}/api/historical_prices/${symbol}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      const pricesData = await response.json();
+      setHistoricalPrices(pricesData); // Assuming pricesData is already an array
+    } catch (error) {
+      setError("Failed to fetch historical prices.");
+    }
+  };
+
+  const fetchHistoricalPrices = async (symbol) => {
+    setError("");
+    try {
+      const response = await fetch(`${url}/api/historical_prices/${symbol}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      const pricesData = await response.json();
+      setHistoricalPrices(pricesData);
+    } catch (error) {
+      console.error("Error fetching historical prices:", error);
+      setError("Failed to fetch historical prices.");
+    }
+  };
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   const userId = "1"; //to be retrieved from a logged-in user session or state
+  //   try {
+  //     const response = await fetch(`${url}/api/portfolio/update_user`, {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({
+  //         user_id: userId,
+  //         symbol: stockToAdd.toUpperCase(), //because symbols are uppercase
+  //         quantity: parseInt(quantityToAdd, 10), //quantity has to be an integer
+  //       }),
+  //     });
+  //     const data = await response.json();
+  //     if (response.ok) {
+  //       console.log("Stock updated:", data);
+  //       //optionally resetting the form fields and fetch the updated list
+  //       setStockToAdd("");
+  //       setQuantityToAdd("");
+  //     } else {
+  //       //Handle any errors from the server side
+  //       setError(data.error || "An error occurred while updating the stock.");
+  //     }
+  //   } catch (error) {
+  //     console.error("Error updating stock:", error);
+  //     setError("Failed to update stock. Please try again.");
+  //   }
+  // };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const userId = "1"; //to be retrieved from a logged-in user session or state
     try {
       const response = await fetch(`${url}/api/portfolio/update_user`, {
         method: "POST",
@@ -41,22 +98,20 @@ function App() {
         },
         body: JSON.stringify({
           user_id: userId,
-          symbol: stockToAdd.toUpperCase(), //because symbols are uppercase
-          quantity: parseInt(quantityToAdd, 10), //quantity has to be an integer
+          symbol: stockToAdd.toUpperCase(),
+          quantity: parseInt(quantityToAdd, 10),
         }),
       });
       const data = await response.json();
       if (response.ok) {
-        console.log("Stock updated:", data);
-        //optionally resetting the form fields and fetch the updated list
         setStockToAdd("");
         setQuantityToAdd("");
+        // Update the list to reflect the new changes
+        setList(data);
       } else {
-        //Handle any errors from the server side
         setError(data.error || "An error occurred while updating the stock.");
       }
     } catch (error) {
-      console.error("Error updating stock:", error);
       setError("Failed to update stock. Please try again.");
     }
   };
@@ -96,11 +151,29 @@ function App() {
                     {stockInfo.num_stocks} stocks at ${stockInfo.last_close}
                   </p>
                   <button
-                    className="Select-button"
+                    className="Data-button"
                     onClick={() => handleStockSelection(symbol)}
                   >
-                    Select
+                    Data
                   </button>
+                  {selectedStock === symbol && historicalPrices.length > 0 && (
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Date</th>
+                          <th>Close Price</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {historicalPrices.map((price, index) => (
+                          <tr key={index}>
+                            <td>{Object.keys(price)[0]}</td>
+                            <td>${Object.values(price)[0]}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
                 </div>
               ))}
             </section>
