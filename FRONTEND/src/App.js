@@ -1,5 +1,7 @@
+import React, { useState, useEffect } from "react";
 import "./App.css";
-import { useState, useEffect } from "react";
+import { Line } from "react-chartjs-2";
+import "chart.js/auto";
 
 function App() {
   const [portfolio, setPortfolio] = useState(null);
@@ -8,8 +10,8 @@ function App() {
   const [list, setList] = useState(null);
   const [selectedStock, setSelectedStock] = useState(null);
   const [historicalPrices, setHistoricalPrices] = useState([]);
-  const [stockToAdd, setStockToAdd] = useState(""); //manage stock input
-  const [quantityToAdd, setQuantityToAdd] = useState(""); //state to manage quantity input
+  const [stockToAdd, setStockToAdd] = useState("");
+  const [quantityToAdd, setQuantityToAdd] = useState("");
   const userId = "user1";
   const url = `http://127.0.0.1:5001`;
 
@@ -19,7 +21,7 @@ function App() {
         const response = await fetch(`${url}/api/portfolio`);
         const data = await response.json();
         console.log("Fetched portfolio data:", data);
-        setList(data); //to update the state with the fetched data
+        setList(data);
       } catch (error) {
         console.error("Error fetching data:", error);
         setError("Failed to fetch data.");
@@ -37,24 +39,10 @@ function App() {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
       const pricesData = await response.json();
-      setHistoricalPrices(pricesData); // Assuming pricesData is already an array
-    } catch (error) {
-      setError("Failed to fetch historical prices.");
-    }
-  };
-
-  const fetchHistoricalPrices = async (symbol) => {
-    setError("");
-    try {
-      const response = await fetch(`${url}/api/historical_prices/${symbol}`);
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-      const pricesData = await response.json();
       setHistoricalPrices(pricesData);
     } catch (error) {
-      console.error("Error fetching historical prices:", error);
       setError("Failed to fetch historical prices.");
+      console.error(error);
     }
   };
 
@@ -76,14 +64,30 @@ function App() {
       if (response.ok) {
         setStockToAdd("");
         setQuantityToAdd("");
-        //update the list to reflect the new changes
         setList(data);
       } else {
         setError(data.error || "An error occurred while updating the stock.");
       }
     } catch (error) {
       setError("Failed to update stock. Please try again.");
+      console.error(error);
     }
+  };
+
+  // Function to prepare chart data
+  const getChartData = () => {
+    return {
+      labels: historicalPrices.map((price) => Object.keys(price)[0]),
+      datasets: [
+        {
+          label: `Historical Prices for ${selectedStock}`,
+          data: historicalPrices.map((price) => Object.values(price)[0]),
+          fill: false,
+          backgroundColor: "rgb(75, 192, 192)",
+          borderColor: "rgba(75, 192, 192, 0.2)",
+        },
+      ],
+    };
   };
 
   return (
@@ -108,7 +112,7 @@ function App() {
           />
           <button type="submit">Add Stock</button>
         </form>
-        {list ? (
+        {list && (
           <div>
             <h2 className="Portfolio-value">
               Total Portfolio Value: ${list.total_port_val}
@@ -127,30 +131,35 @@ function App() {
                     Data
                   </button>
                   {selectedStock === symbol && historicalPrices.length > 0 && (
-                    <table>
-                      <thead>
-                        <tr>
-                          <th>Date</th>
-                          <th>Close Price</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {historicalPrices.map((price, index) => (
-                          <tr key={index}>
-                            <td>{Object.keys(price)[0]}</td>
-                            <td>${Object.values(price)[0]}</td>
+                    <>
+                      <Line data={getChartData()} />
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Date</th>
+                            <th>Close Price</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {historicalPrices.map((price, index) => {
+                            const [date, closePrice] = Object.entries(price)[0];
+                            return (
+                              <tr key={index}>
+                                <td>{date}</td>
+                                <td>${closePrice}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </>
                   )}
                 </div>
               ))}
             </section>
           </div>
-        ) : (
-          <div>Loading portfolio...</div>
         )}
+        {!list && <div>Loading portfolio...</div>}
       </main>
       <footer>
         <p>&copy; {new Date().getFullYear()} Floos</p>
