@@ -57,36 +57,6 @@ function App() {
       setError("Failed to fetch historical prices.");
     }
   };
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-  //   const userId = "1"; //to be retrieved from a logged-in user session or state
-  //   try {
-  //     const response = await fetch(`${url}/api/portfolio/update_user`, {
-  //       method: "POST",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //       },
-  //       body: JSON.stringify({
-  //         user_id: userId,
-  //         symbol: stockToAdd.toUpperCase(), //because symbols are uppercase
-  //         quantity: parseInt(quantityToAdd, 10), //quantity has to be an integer
-  //       }),
-  //     });
-  //     const data = await response.json();
-  //     if (response.ok) {
-  //       console.log("Stock updated:", data);
-  //       //optionally resetting the form fields and fetch the updated list
-  //       setStockToAdd("");
-  //       setQuantityToAdd("");
-  //     } else {
-  //       //Handle any errors from the server side
-  //       setError(data.error || "An error occurred while updating the stock.");
-  //     }
-  //   } catch (error) {
-  //     console.error("Error updating stock:", error);
-  //     setError("Failed to update stock. Please try again.");
-  //   }
-  // };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -106,7 +76,7 @@ function App() {
       if (response.ok) {
         setStockToAdd("");
         setQuantityToAdd("");
-        // Update the list to reflect the new changes
+        //update the list to reflect the new changes
         setList(data);
       } else {
         setError(data.error || "An error occurred while updating the stock.");
