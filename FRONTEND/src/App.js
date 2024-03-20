@@ -12,24 +12,67 @@ function App() {
   const [historicalPrices, setHistoricalPrices] = useState([]);
   const [stockToAdd, setStockToAdd] = useState("");
   const [quantityToAdd, setQuantityToAdd] = useState("");
-  const userId = "user1";
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const url = `http://127.0.0.1:5001`;
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const response = await fetch(`${url}/api/portfolio`);
-        const data = await response.json();
-        console.log("Fetched portfolio data:", data);
-        setList(data);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        setError("Failed to fetch data.");
-      }
-    }
-    fetchData();
-  }, []);
+  //function to fetch portfolio data
+  const fetchPortfolioData = async () => {
+    try {
+      const response = await fetch(`${url}/api/portfolio`);
+      const data = await response.json();
+      console.log("Fetched portfolio data:", data);
 
+      // to display the total portfolio value after logging in
+      if (data.total_port_val) {
+        console.log("Total Portfolio Value: ", data.total_port_val);
+        setTotal(data.total_port_val);
+      } else {
+        console.log("No total portfolio value");
+      }
+
+      // for the purpose of displaying error messages
+      setList(data);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      setError("Failed to fetch data.");
+    }
+  };
+
+  // fetching while logged in
+  useEffect(() => {
+    if (isLoggedIn) {
+      fetchPortfolioData();
+    }
+  }, [isLoggedIn]);
+
+  // data is sent between the front and back end
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch(`${url}/api/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setIsLoggedIn(true);
+        setError("");
+        fetchPortfolioData();
+      } else {
+        setError("Login failed. Please check your username and password.");
+      }
+    } catch (error) {
+      setError("Failed to log in. Please try again.");
+      console.error(error);
+    }
+  };
+
+  // stock data is sent
   const handleStockSelection = async (symbol) => {
     setSelectedStock(symbol);
     setError("");
@@ -45,7 +88,7 @@ function App() {
       console.error(error);
     }
   };
-
+  // update/add/remove
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -55,7 +98,7 @@ function App() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          user_id: userId,
+          user_id: 1, // assuming handle of user_id on the server-side based on authentication
           symbol: stockToAdd.toUpperCase(),
           quantity: parseInt(quantityToAdd, 10),
         }),
@@ -64,7 +107,7 @@ function App() {
       if (response.ok) {
         setStockToAdd("");
         setQuantityToAdd("");
-        setList(data);
+        fetchPortfolioData();
       } else {
         setError(data.error || "An error occurred while updating the stock.");
       }
@@ -73,8 +116,7 @@ function App() {
       console.error(error);
     }
   };
-
-  // Function to prepare chart data
+  // displaying historical prices
   const getChartData = () => {
     return {
       labels: historicalPrices.map((price) => Object.keys(price)[0]),
@@ -90,10 +132,40 @@ function App() {
     };
   };
 
+  //display of login page
+  if (!isLoggedIn) {
+    return (
+      <div className="App">
+        <header className="App-header">
+          <h1>Please Log In</h1>
+        </header>
+        <main>
+          {error && <div className="Error-message">{error}</div>}
+          <form onSubmit={handleLogin}>
+            <input
+              type="text"
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <button type="submit">Login</button>
+          </form>
+        </main>
+      </div>
+    );
+  }
+
+  // display after successful connection
   return (
     <div className="App">
-      <header className="App-header">
-        <h1>Welcome, {userId}</h1>
+      <header header className="App-header">
+        <h1>Welcome to Floos</h1>
       </header>
       <main>
         {error && <div className="Error-message">{error}</div>}
@@ -110,13 +182,11 @@ function App() {
             value={quantityToAdd}
             onChange={(e) => setQuantityToAdd(e.target.value)}
           />
-          <button type="submit">Add Stock</button>
+          <button type="submit">Update Stock</button>
         </form>
         {list && (
           <div>
-            <h2 className="Portfolio-value">
-              Total Portfolio Value: ${list.total_port_val}
-            </h2>
+            <h2 className="Portfolio-value">Total Portfolio Value: ${total}</h2>
             <section className="Stock-list">
               {Object.entries(list.stocks).map(([symbol, stockInfo]) => (
                 <div className="Stock-item" key={symbol}>
@@ -142,7 +212,8 @@ function App() {
                         </thead>
                         <tbody>
                           {historicalPrices.map((price, index) => {
-                            const [date, closePrice] = Object.entries(price)[0];
+                            const date = Object.keys(price)[0];
+                            const closePrice = Object.values(price)[0];
                             return (
                               <tr key={index}>
                                 <td>{date}</td>
