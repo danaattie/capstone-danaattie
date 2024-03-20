@@ -1,6 +1,6 @@
 import json
 import requests
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, session
 from datetime import date, timedelta
 from flask_cors import CORS
 import random
@@ -9,24 +9,27 @@ from sqlalchemy.pool import NullPool
 import oracledb
 from sqlalchemy import create_engine, text
 
-# Load the environment variables from the .env file
-with open("secrets.txt") as file:
+
+with open("secrets.txt") as file: #the API key is hidden
     API_KEY = file.read()
 
-un = 'MYBACKEND'
+    app = Flask(__name__)
+
+CORS(app)
+
+app.config['SECRET_KEY'] = 'JNCIZPHAUKJIOLZ5' #random secret key to ensure log in works
+
+un = 'MYBACKEND' #database credentials
 pw = 'AaZZ0r_cle#1'
 dsn = '(description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(port=1522)(host=adb.eu-madrid-1.oraclecloud.com))(connect_data=(service_name=gc1ee84d2900e16_capstone_high.adb.oraclecloud.com))(security=(ssl_server_dn_match=yes)))'
 
-pool = oracledb.create_pool(user=un, password=pw,dsn=dsn)
+pool = oracledb.create_pool(user=un, password=pw, dsn=dsn) #implementing Oracle db
 
-engine = create_engine("oracle+oracledb://", creator=pool.acquire, poolclass=NullPool, future=True, echo=True)
+engine = create_engine("oracle+oracledb://", creator=pool.acquire, poolclass=NullPool, future=True, echo=True) #execution of SQL commands
 
-app = Flask(__name__)
-# cors = CORS(app, resources={r"/api/*": {"origins": "*"}})
-CORS(app)
 
 def obtain_user_list(user_id):
-    # This function now performs a SQL query to obtain the user's stock list
+    #this function performs a SQL query to obtain the user's stock list
     stocks_list = []
     with pool.acquire() as connection:
         with connection.cursor() as cursor:
@@ -47,10 +50,10 @@ def get_previous_weekday():
     return (today-delta).strftime("%Y-%m-%d")
 
 def get_stock_quantity(stock_symbol):
-    return random.randint(50, 500)  # Generates a random number between 50 and 500
+    return random.randint(50, 500)  #generates a random number between 50 and 500
 
 def get_user_stocks(user_id):
-    user_id = int(user_id)  # Ensure user_id is an integer
+    user_id = int(user_id)  #ensure user_id is an integer
     stocks_list = []
     with pool.acquire() as connection:
         with connection.cursor() as cursor:
@@ -63,7 +66,7 @@ def get_user_stocks(user_id):
 @app.route("/api/portfolio", methods=['GET'])
 def retrieve_portfolio():
     total_value_of_portfolio = 0
-    user_id = 1  # Assuming this is just a placeholder
+    user_id = 1  
     portfolio_response = {"username": user_id, "stocks": {}}
     
     portfolio_stocks = get_user_stocks(user_id)
@@ -78,17 +81,15 @@ def retrieve_portfolio():
             last_closing_price = stock_data["Time Series (Daily)"][get_previous_weekday()]["4. close"]
             closing_price = float(last_closing_price)
 
-            # Update individual stock info
             portfolio_response["stocks"][stock_symbol] = {
                 "num_stocks": num_stocks,
                 "last_close": closing_price
             }
 
-            # Update total portfolio value
             total_value_of_portfolio += num_stocks * closing_price
 
         except Exception as e:
-            # Handling errors in data retrieval
+            #handling errors in data retrieval
             portfolio_response["stocks"][stock_symbol] = {"error": f"Data retrieval failed: {e}"}
 
     # Add total portfolio value to the response
@@ -108,7 +109,7 @@ def retrieve_stock_data(stock_symbol):
         data = response.json()
 
         if "Time Series (Daily)" not in data:
-            #Log the full API response for debugging
+            #logs the full API response for debugging
             return jsonify({"error": "Expected data not found in API response", "api_response": data}), 500
 
         daily_data = data["Time Series (Daily)"] #this is for displaying day by day
@@ -117,13 +118,12 @@ def retrieve_stock_data(stock_symbol):
     except Exception as e:
         return jsonify({"error": f"Failed to retrieve data: {str(e)}", "exception_details": str(e)}), 500
 
-
+    
 @app.route("/api/portfolio/update_user", methods=['POST'])
 def update_user():
     try:
         data = request.json
-        print("Received data:", data)  # Log the incoming payload for debugging
-        user_id = data.get("user_id", 1)  # In production, use session or token for user_id
+        user_id = data.get("user_id", 1) # 1 is for setting default values 
         symbol = data.get("symbol")
         quantity = data.get("quantity")
 
@@ -131,46 +131,28 @@ def update_user():
             raise ValueError("Both 'symbol' and 'quantity' must be provided.")
 
         with engine.begin() as connection:
-            # If quantity is zero, delete the stock; otherwise, update or insert.
+            #if quantity is zero, delete the stock; otherwise, update or insert.
             if quantity == 0:
-                delete_result = connection.execute(
-                    text("DELETE FROM STOCKS WHERE user_id = :user_id AND symbol = :symbol"),
-                    {"user_id": user_id, "symbol": symbol}
-                )
-                print(f"Deleted {delete_result.rowcount} rows for user {user_id} and symbol {symbol}")  # Log deletion
+                # DELETE operation
+                delete_stmt = text("DELETE FROM STOCKS WHERE user_id = :user_id AND symbol = :symbol")
+                connection.execute(delete_stmt, user_id=user_id, symbol=symbol)
             else:
-                # Check if the stock exists
-                result = connection.execute(
-                    text("SELECT quantity FROM STOCKS WHERE user_id = :user_id AND symbol = :symbol FOR UPDATE"),
-                    {"user_id": user_id, "symbol": symbol}
-                )
-                stock = result.fetchone()
+                #check if the stock exists
+                select_stmt = text("SELECT quantity FROM STOCKS WHERE user_id = :user_id AND symbol = :symbol")
+                stock = connection.execute(select_stmt, user_id=user_id, symbol=symbol).fetchone()
                 if stock:
-                    # Update the existing stock quantity
-                    update_result = connection.execute(
-                        text("UPDATE STOCKS SET quantity = :quantity WHERE user_id = :user_id AND symbol = :symbol"),
-                        {"user_id": user_id, "symbol": symbol, "quantity": quantity}
-                    )
-                    print(f"Updated quantity to {quantity} for user {user_id} and symbol {symbol}")  # Log update
+                    #updates operation
+                    update_stmt = text("UPDATE STOCKS SET quantity = :quantity WHERE user_id = :user_id AND symbol = :symbol")
+                    connection.execute(update_stmt, quantity=quantity, user_id=user_id, symbol=symbol)
                 else:
-                    # Insert a new stock record
-                    insert_result = connection.execute(
-                        text("INSERT INTO STOCKS (user_id, symbol, quantity) VALUES (:user_id, :symbol, :quantity)"),
-                        {"user_id": user_id, "symbol": symbol, "quantity": quantity}
-                    )
-                    print(f"Inserted new stock for user {user_id} with symbol {symbol} and quantity {quantity}")  # Log insert
+                    #inserts operation
+                    insert_stmt = text("INSERT INTO STOCKS (user_id, symbol, quantity) VALUES (:user_id, :symbol, :quantity)")
+                    connection.execute(insert_stmt, user_id=user_id, symbol=symbol, quantity=quantity)
 
-        # Fetch the current portfolio to ensure front end gets the updated data
-        updated_stocks = connection.execute(
-            text("SELECT * FROM STOCKS WHERE user_id = :user_id"),
-            {"user_id": user_id}
-        ).fetchall()
-        print(f"Current stocks after update: {updated_stocks}")  # Log the current state of the portfolio
-
-        return jsonify({"message": "Stocks updated successfully", "updated_stocks": updated_stocks}), 200
+        return jsonify({"message": "Stocks updated successfully"}), 200
 
     except Exception as e:
-        print("Error:", e)  # Log the error for debugging
+        print("Error:", e)  #log the error for debugging purposes
         return jsonify({"error": f"Failed to update stocks: {str(e)}"}), 500
 
 
@@ -181,7 +163,7 @@ def get_historical_prices(stock_symbol):
         response = requests.get(url)
         data = response.json()
 
-        #extract just the last 30 days of data
+        #extract the last 30 days of data
         time_series = data.get('Time Series (Daily)', {})
         last_30_days = list(time_series.items())[:30]
         prices = [{date: info['4. close']} for date, info in last_30_days]
@@ -190,6 +172,29 @@ def get_historical_prices(stock_symbol):
     except Exception as e:
         return jsonify({"error": f"Failed to fetch historical prices: {str(e)}"}), 500
 
+@app.route('/login', methods=['POST']) #connection with the front end
+def login():
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+
+    with engine.connect() as connection:
+        user = connection.execute(
+            text("SELECT * FROM USERS WHERE username = :username AND password = :password"),
+            {"username": username, "password": password}
+        ).fetchone()
+
+        if user:
+            session['user'] = user._mapping['username'] # mapping allows log in with random secret key
+            return jsonify({"message": "Logged in successfully"}), 200
+        else:
+            return jsonify({"error": "Invalid username or password"}), 401
+
+
+@app.route('/logout', methods=['POST'])
+def logout():
+    session.pop('user', None)
+    return jsonify({"message": "Logged out successfully"}), 200
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5001, use_reloader=False) 
