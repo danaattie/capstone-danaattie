@@ -1,5 +1,5 @@
 .App {
-  text-align: center;
+  text-align: left; /* Changed from center to left */
   font-family: "Arial", sans-serif;
 }
 
@@ -12,7 +12,7 @@
 
 .Data-button,
 .Select-button {
-  background-color: #007bff;
+  background-color: #199d87;
   color: white;
   border: none;
   padding: 10px 20px;
@@ -42,7 +42,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
-  justify-content: center;
+  justify-content: flex-start; /* Changed from center to flex-start */
   margin-top: 20px;
 }
 
@@ -78,7 +78,7 @@ tr:nth-child(even) {
 @media (max-width: 768px) {
   .stocks {
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start; /* Adjusted for alignment on smaller screens */
   }
 
   .stock-item {
