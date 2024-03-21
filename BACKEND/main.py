@@ -8,12 +8,13 @@ from models import get_user, get_user_stocks
 from sqlalchemy.pool import NullPool
 import oracledb
 from sqlalchemy import create_engine, text
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 with open("secrets.txt") as file: #the API key is hidden
     API_KEY = file.read()
 
-    app = Flask(__name__)
+app = Flask(__name__)
 
 CORS(app)
 
@@ -92,7 +93,7 @@ def retrieve_portfolio():
             #handling errors in data retrieval
             portfolio_response["stocks"][stock_symbol] = {"error": f"Data retrieval failed: {e}"}
 
-    # Add total portfolio value to the response
+    #add total portfolio value to the response
     portfolio_response["total_port_val"] = total_value_of_portfolio
     return jsonify(portfolio_response)
 
@@ -123,31 +124,31 @@ def retrieve_stock_data(stock_symbol):
 def update_user():
     try:
         data = request.json
-        user_id = data.get("user_id", 1) # 1 is for setting default values 
+        user_id = data.get("user_id", 1) # 1 is for setting default values
         symbol = data.get("symbol")
         quantity = data.get("quantity")
 
         if symbol is None or quantity is None:
             raise ValueError("Both 'symbol' and 'quantity' must be provided.")
 
-        with engine.begin() as connection:
+        with engine.begin() as connection: #according with the latest version on Flask
             #if quantity is zero, delete the stock; otherwise, update or insert.
             if quantity == 0:
-                # DELETE operation
+                #deletes operation
                 delete_stmt = text("DELETE FROM STOCKS WHERE user_id = :user_id AND symbol = :symbol")
-                connection.execute(delete_stmt, user_id=user_id, symbol=symbol)
+                connection.execute(delete_stmt, {"user_id":user_id, "symbol":symbol})
             else:
                 #check if the stock exists
                 select_stmt = text("SELECT quantity FROM STOCKS WHERE user_id = :user_id AND symbol = :symbol")
-                stock = connection.execute(select_stmt, user_id=user_id, symbol=symbol).fetchone()
+                stock = connection.execute(select_stmt, {"user_id":user_id, "symbol":symbol}).fetchone()
                 if stock:
                     #updates operation
                     update_stmt = text("UPDATE STOCKS SET quantity = :quantity WHERE user_id = :user_id AND symbol = :symbol")
-                    connection.execute(update_stmt, quantity=quantity, user_id=user_id, symbol=symbol)
+                    connection.execute(update_stmt, {"quantity":quantity, "user_id":user_id, "symbol":symbol})
                 else:
                     #inserts operation
                     insert_stmt = text("INSERT INTO STOCKS (user_id, symbol, quantity) VALUES (:user_id, :symbol, :quantity)")
-                    connection.execute(insert_stmt, user_id=user_id, symbol=symbol, quantity=quantity)
+                    connection.execute(insert_stmt, {"user_id":user_id, "symbol":symbol, "quantity":quantity})
 
         return jsonify({"message": "Stocks updated successfully"}), 200
 
@@ -172,7 +173,7 @@ def get_historical_prices(stock_symbol):
     except Exception as e:
         return jsonify({"error": f"Failed to fetch historical prices: {str(e)}"}), 500
 
-@app.route('/login', methods=['POST']) #connection with the front end
+@app.route('/login', methods=['POST']) #connection with the front end, cookie had to be removed since it was causing erros in many areas once implemented
 def login():
     data = request.json
     username = data.get('username')
@@ -191,7 +192,7 @@ def login():
             return jsonify({"error": "Invalid username or password"}), 401
 
 
-@app.route('/logout', methods=['POST'])
+@app.route('/logout', methods=['POST']) #removed from front end return statement as unsolvable errors were found multiple times
 def logout():
     session.pop('user', None)
     return jsonify({"message": "Logged out successfully"}), 200
