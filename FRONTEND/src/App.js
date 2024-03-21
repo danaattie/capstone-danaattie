@@ -15,7 +15,7 @@ function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const url = `http://127.0.0.1:5001`;
+  const url = `https://mcsbt-integration-416418.ew.r.appspot.com`;
 
   //function to fetch portfolio data
   const fetchPortfolioData = async () => {
