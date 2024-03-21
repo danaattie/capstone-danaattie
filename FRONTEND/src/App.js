@@ -51,7 +51,7 @@ function App() {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`${url}/api/login`, {
+      const response = await fetch(`${url}/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -72,6 +72,27 @@ function App() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      //Send a request to the logout endpoint ; assigned but not used in the return statement as it implied many recurring errors
+      const response = await fetch(`${url}/logout`, {
+        method: "POST",
+        credentials: "include", // Needed to include the session cookie
+      });
+      if (response.ok) {
+        // Successfully logged out
+        setIsLoggedIn(false);
+        setPortfolio(null); //clear the portfolio state
+        //clear any other state related to the authenticated user
+      } else {
+        //handle errors here, such as showing an error message to the user
+        console.error("Logout failed");
+      }
+    } catch (error) {
+      console.error("There was an error logging out", error);
+    }
+  };
+
   // stock data is sent
   const handleStockSelection = async (symbol) => {
     setSelectedStock(symbol);
@@ -88,7 +109,7 @@ function App() {
       console.error(error);
     }
   };
-  // update/add/remove
+  // update/add/remove in the same button (precisions in main.py)
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -98,7 +119,7 @@ function App() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          user_id: 1, // assuming handle of user_id on the server-side based on authentication
+          user_id: 1, //assuming handle of user_id on the server-side based on authentication
           symbol: stockToAdd.toUpperCase(),
           quantity: parseInt(quantityToAdd, 10),
         }),
@@ -132,7 +153,7 @@ function App() {
     };
   };
 
-  //display of login page
+  // //display of login page
   if (!isLoggedIn) {
     return (
       <div className="App">
@@ -182,7 +203,7 @@ function App() {
             value={quantityToAdd}
             onChange={(e) => setQuantityToAdd(e.target.value)}
           />
-          <button type="submit">Update Stock</button>
+          <button type="submit">Update</button>
         </form>
         {list && (
           <div>
