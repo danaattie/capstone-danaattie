@@ -52,7 +52,6 @@ function App() {
     e.preventDefault();
     try {
       const response = await fetch(`${url}/login`, {
-        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
@@ -76,7 +75,6 @@ function App() {
     try {
       //Send a request to the logout endpoint ; assigned but not used in the return statement as it implied many recurring errors
       const response = await fetch(`${url}/logout`, {
-        method: "POST",
         credentials: "include", // Needed to include the session cookie
       });
       if (response.ok) {
@@ -114,7 +112,6 @@ function App() {
     e.preventDefault();
     try {
       const response = await fetch(`${url}/api/portfolio/update_user`, {
-        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
