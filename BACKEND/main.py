@@ -1,6 +1,6 @@
 import json
 import requests
-from flask import Flask, request, jsonify, session
+from flask import Flask, request, jsonify, session, make_response
 from datetime import date, timedelta
 from flask_cors import CORS
 import random
@@ -8,17 +8,16 @@ from models import get_user, get_user_stocks
 from sqlalchemy.pool import NullPool
 import oracledb
 from sqlalchemy import create_engine, text
-from werkzeug.security import generate_password_hash, check_password_hash
-
 
 with open("secrets.txt") as file: #the API key is hidden
     API_KEY = file.read()
 
 app = Flask(__name__)
 
-CORS(app)
-
+CORS(app, supports_credentials=True, resources={r"/*": {}})
 app.config['SECRET_KEY'] = 'JNCIZPHAUKJIOLZ5' #random secret key to ensure log in works
+app.config['SESSION_COOKIE_SAMESITE'] = "None"
+app.config['SESSION_COOKIE_SECURE'] = True
 
 un = 'MYBACKEND' #database credentials
 pw = 'AaZZ0r_cle#1'
@@ -27,6 +26,15 @@ dsn = '(description= (retry_count=20)(retry_delay=3)(address=(protocol=tcps)(por
 pool = oracledb.create_pool(user=un, password=pw, dsn=dsn) #implementing Oracle db
 
 engine = create_engine("oracle+oracledb://", creator=pool.acquire, poolclass=NullPool, future=True, echo=True) #execution of SQL commands
+
+def add_cors_headers(response):
+    origin = request.headers.get('Origin')
+    if origin:
+        response.headers['Access-Control-Allow-Origin'] = origin
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization'
+    return response
 
 
 def obtain_user_list(user_id):
@@ -64,7 +72,7 @@ def get_user_stocks(user_id):
     return stocks_list
 
     
-@app.route("/api/portfolio", methods=['GET'])
+@app.route("/api/portfolio")
 def retrieve_portfolio():
     total_value_of_portfolio = 0
     user_id = 1  
@@ -98,7 +106,7 @@ def retrieve_portfolio():
     return jsonify(portfolio_response)
 
 
-@app.route("/api/portfolio/<stock_symbol>", methods=['GET']) 
+@app.route("/api/portfolio/<stock_symbol>") 
 def retrieve_stock_data(stock_symbol):
     try:
         api_url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={stock_symbol}&apikey={API_KEY}"
@@ -157,7 +165,7 @@ def update_user():
         return jsonify({"error": f"Failed to update stocks: {str(e)}"}), 500
 
 
-@app.route('/api/historical_prices/<stock_symbol>', methods=['GET'])
+@app.route('/api/historical_prices/<stock_symbol>')
 def get_historical_prices(stock_symbol):
     try:
         url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol={stock_symbol}&outputsize=compact&apikey={API_KEY}"
@@ -175,9 +183,10 @@ def get_historical_prices(stock_symbol):
 
 @app.route('/login', methods=['POST']) #connection with the front end, cookie had to be removed since it was causing erros in many areas once implemented
 def login():
-    data = request.json
-    username = data.get('username')
-    password = data.get('password')
+    if request.method == 'POST':
+        data = request.json
+        username = data.get('username')
+        password = data.get('password')
 
     with engine.connect() as connection:
         user = connection.execute(
@@ -186,16 +195,21 @@ def login():
         ).fetchone()
 
         if user:
-            session['user'] = user._mapping['username'] # mapping allows log in with random secret key
-            return jsonify({"message": "Logged in successfully"}), 200
+            # User found, return success message with status code 200
+            response = jsonify({"message": "Logged in successfully"})
+            return response, 200
         else:
-            return jsonify({"error": "Invalid username or password"}), 401
+            # User not found, return error message with status code 401
+            response = jsonify({"error": "Invalid username or password"})
+            return response, 401
+    
 
 
-@app.route('/logout', methods=['POST']) #removed from front end return statement as unsolvable errors were found multiple times
+@app.route('/logout')#removed from front end return statement as unsolvable errors were found multiple times
 def logout():
     session.pop('user', None)
     return jsonify({"message": "Logged out successfully"}), 200
+
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5001, use_reloader=False) 
