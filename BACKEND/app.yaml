@@ -1,7 +1,1 @@
 runtime: python39
-gunicorn -b :$PORT main:app -w 8 -t 240 --threads 4
-
-instance_class: B8
-
-manual_scaling:
-  instances: 5
